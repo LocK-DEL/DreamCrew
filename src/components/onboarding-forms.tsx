@@ -12,6 +12,7 @@ import {
 } from "@/app/[locale]/onboarding/actions";
 
 export interface OnboardingProfileData {
+  handle?: string | null;
   display_name?: string | null;
   age_range?: string | null;
   identity_type?: string | null;
@@ -82,6 +83,25 @@ function IdentityForm({ locale, profile }: Pick<OnboardingFormsProps, "locale" |
     <form action={action} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       <div className="grid gap-5 sm:grid-cols-2">
+        <label className={`${groupClass} sm:col-span-2`}>
+          <span className="text-sm font-black">{copy.fields.handle}</span>
+          <div className="mt-2 flex items-center rounded-2xl border border-[var(--border)] bg-white focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100">
+            <span className="pl-4 text-sm font-bold text-[var(--muted)]">dreamcrew.app/</span>
+            <input
+              className="min-h-12 min-w-0 flex-1 rounded-2xl bg-transparent px-2 pr-4 text-sm lowercase outline-none"
+              name="handle"
+              defaultValue={profile.handle ?? ""}
+              minLength={3}
+              maxLength={30}
+              pattern="[a-z0-9][a-z0-9_-]{2,29}"
+              autoCapitalize="none"
+              autoCorrect="off"
+              required
+            />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-[var(--muted)]">{copy.handleHint}</p>
+          <ErrorText code={state.errors.handle} locale={locale} />
+        </label>
         <label className={groupClass}>
           <span className="text-sm font-black">{copy.fields.display_name}</span>
           <input className={inputClass} name="display_name" defaultValue={profile.display_name ?? ""} maxLength={80} required />
