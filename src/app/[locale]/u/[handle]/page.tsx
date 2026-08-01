@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { signOut } from "@/app/[locale]/auth/actions";
 import { PublicProfile } from "@/components/profile/public-profile";
+import { profileCopy } from "@/content/profile-copy.mjs";
 import { normalizeLocale } from "@/lib/i18n.mjs";
 import { calculateProfileCompleteness } from "@/lib/profile/completeness.mjs";
 import { loadPublicProfile } from "@/lib/profile/load-public-profile";
@@ -68,5 +70,20 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     profile.skills.map((skill) => ({ evidence_url: skill.evidenceUrl })),
   ).percentage;
 
-  return <PublicProfile locale={locale} loaded={loaded} completeness={completeness} />;
+  return (
+    <>
+      {loaded.viewerIsOwner ? (
+        <form action={signOut} className="fixed bottom-24 right-5 z-40 md:bottom-6 lg:right-8">
+          <input type="hidden" name="locale" value={locale} />
+          <button
+            type="submit"
+            className="rounded-full border border-[var(--border)] bg-white/95 px-5 py-3 text-sm font-black text-[var(--muted)] shadow-xl backdrop-blur transition hover:-translate-y-0.5 hover:text-rose-700"
+          >
+            {profileCopy[locale].signOut}
+          </button>
+        </form>
+      ) : null}
+      <PublicProfile locale={locale} loaded={loaded} completeness={completeness} />
+    </>
+  );
 }
