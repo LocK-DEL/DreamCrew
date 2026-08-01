@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="DreamCrew app icon">
+  <defs>
+    <linearGradient id="g" x1="24" y1="18" x2="168" y2="174" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4f46e5"/>
+      <stop offset="0.55" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="48" fill="#f8f7f4"/>
+  <rect x="18" y="18" width="156" height="156" rx="42" fill="url(#g)"/>
+  <path d="M54 58h36c31 0 50 14 50 38 0 24-19 38-50 38H54V58Zm32 53c15 0 24-5 24-15s-9-15-24-15h-4v30h4Z" fill="white"/>
+  <circle cx="139" cy="53" r="10" fill="#a7f3d0"/>
+</svg>
