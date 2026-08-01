@@ -3,15 +3,10 @@
 import { redirect } from "next/navigation";
 import { normalizeLocale } from "@/lib/i18n.mjs";
 import { requireAuthenticatedUser } from "@/lib/auth/require-user";
+import type { OnboardingActionState } from "@/lib/profile/action-state";
 import { validateProfileStep } from "@/lib/profile/schema.mjs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Locale } from "@/types/content";
-
-export interface OnboardingActionState {
-  errors: Record<string, string>;
-}
-
-export const initialOnboardingState: OnboardingActionState = { errors: {} };
 
 function localeFromForm(formData: FormData): Locale {
   return normalizeLocale(String(formData.get("locale") ?? "zh")) as Locale;
@@ -84,10 +79,15 @@ export async function saveSkillsStep(
   if (skillError) return { errors: { _form: "save_failed" } };
 
   const step = Math.max(await currentOnboardingStep(userId), 2);
-  const { skills: _skills, ...profileLinks } = result.value;
+  const profileLinks = {
+    portfolio_url: result.value.portfolio_url,
+    github_url: result.value.github_url,
+    linkedin_url: result.value.linkedin_url,
+    onboarding_step: step,
+  };
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ ...profileLinks, onboarding_step: step })
+    .update(profileLinks)
     .eq("user_id", userId);
 
   if (profileError) return { errors: { _form: "save_failed" } };
