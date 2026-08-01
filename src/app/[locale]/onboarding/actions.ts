@@ -9,6 +9,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Locale } from "@/types/content";
 
 interface IdentityValue {
+  handle: string;
   display_name: string;
   age_range: string;
   identity_type: string;
@@ -80,6 +81,7 @@ export async function saveIdentityStep(
   const locale = localeFromForm(formData);
   const userId = await requireAuthenticatedUser(locale, `/${locale}/onboarding?step=1`);
   const result = validateProfileStep(1, {
+    handle: formData.get("handle"),
     display_name: formData.get("display_name"),
     age_range: formData.get("age_range"),
     identity_type: formData.get("identity_type"),
@@ -99,6 +101,7 @@ export async function saveIdentityStep(
     { onConflict: "user_id" },
   );
 
+  if (error?.code === "23505") return validationFailure({ handle: "already_taken" });
   if (error) return validationFailure();
   redirect(`/${locale}/onboarding?step=2`);
 }
