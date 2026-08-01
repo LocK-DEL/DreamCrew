@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { validateProfileStep } from "../src/lib/profile/schema.mjs";
 
 const validStepOne = {
+  handle: "  Dream_Builder-21  ",
   display_name: "  Dream Builder  ",
   age_range: "21-24",
   identity_type: "student",
@@ -13,10 +14,11 @@ const validStepOne = {
   languages: ["zh", "en", "zh"],
 };
 
-test("validates and normalizes identity, location, and languages", () => {
+test("validates and normalizes identity, location, languages, and public handle", () => {
   const result = validateProfileStep(1, validStepOne);
   assert.equal(result.ok, true);
   assert.deepEqual(result.value, {
+    handle: "dream_builder-21",
     display_name: "Dream Builder",
     age_range: "21-24",
     identity_type: "student",
@@ -29,6 +31,7 @@ test("validates and normalizes identity, location, and languages", () => {
 
 test("returns stable field errors for incomplete step one", () => {
   const result = validateProfileStep(1, {
+    handle: "bad handle",
     display_name: " ",
     age_range: "31-40",
     identity_type: "unknown",
@@ -39,6 +42,7 @@ test("returns stable field errors for incomplete step one", () => {
 
   assert.equal(result.ok, false);
   assert.deepEqual(result.errors, {
+    handle: "invalid_handle",
     display_name: "required",
     age_range: "invalid_choice",
     identity_type: "invalid_choice",
