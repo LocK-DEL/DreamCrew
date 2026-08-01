@@ -10,6 +10,7 @@ export const onboardingCopy = {
     finish: "完成档案",
     saving: "正在保存…",
     fields: {
+      handle: "公开用户名",
       display_name: "显示名称",
       age_range: "年龄区间",
       identity_type: "当前身份",
@@ -29,6 +30,7 @@ export const onboardingCopy = {
       bio: "一句个人介绍",
       is_public: "完成后公开我的能力档案",
     },
+    handleHint: "将用于个人主页地址，只能使用3—30位小写英文字母、数字、下划线或连字符。",
     identityTypes: {
       student: "学生",
       "early-career": "职场新人",
@@ -56,6 +58,8 @@ export const onboardingCopy = {
     },
     errors: {
       required: "此项为必填项。",
+      invalid_handle: "用户名需为3—30位，只能包含小写英文字母、数字、下划线或连字符。",
+      already_taken: "这个用户名已经被使用，请换一个。",
       invalid_choice: "请选择有效选项。",
       invalid_country: "请输入两个英文字母，例如 TW、CN、US。",
       choose_one: "请至少选择一项。",
@@ -77,6 +81,7 @@ export const onboardingCopy = {
     finish: "Complete profile",
     saving: "Saving…",
     fields: {
+      handle: "Public username",
       display_name: "Display name",
       age_range: "Age range",
       identity_type: "Current identity",
@@ -96,6 +101,7 @@ export const onboardingCopy = {
       bio: "Short introduction",
       is_public: "Make my capability profile public when complete",
     },
+    handleHint: "Used in your profile URL. Use 3–30 lowercase letters, numbers, underscores, or hyphens.",
     identityTypes: {
       student: "Student",
       "early-career": "Early-career professional",
@@ -123,6 +129,8 @@ export const onboardingCopy = {
     },
     errors: {
       required: "This field is required.",
+      invalid_handle: "Use 3–30 lowercase letters, numbers, underscores, or hyphens.",
+      already_taken: "That username is already in use. Choose another one.",
       invalid_choice: "Choose a valid option.",
       invalid_country: "Use a two-letter code such as TW, CN, or US.",
       choose_one: "Choose at least one option.",
