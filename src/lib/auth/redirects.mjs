@@ -1,5 +1,9 @@
 import { normalizeLocale } from "../i18n.mjs";
 
+export function localizedHomePath(locale) {
+  return `/${normalizeLocale(locale)}`;
+}
+
 export function safeAuthNextPath(value, locale) {
   const normalizedLocale = normalizeLocale(locale);
   const fallback = `/${normalizedLocale}/onboarding`;
