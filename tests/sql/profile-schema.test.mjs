@@ -34,7 +34,7 @@ test("defines explicit public-read and owner-write policies", async () => {
   assert.match(sql, /is_public = true/);
   assert.match(sql, /\(select auth\.uid\(\)\)/);
   assert.match(sql, /with check \(user_id = \(select auth\.uid\(\)\)\)/);
-  assert.match(sql, /exists \(select 1 from public\.profiles/);
+  assert.match(sql, /exists \(\s*select 1 from public\.profiles/);
 });
 
 test("adds policy indexes, timestamp triggers, and the auth-user profile trigger", async () => {
