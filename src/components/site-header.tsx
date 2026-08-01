@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthNavControl } from "@/components/auth-nav-control";
 import type { DreamCrewDictionary, Locale } from "@/types/content";
 
 interface SiteHeaderProps {
@@ -41,12 +42,7 @@ export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
           >
             {dictionary.common.languageSwitch}
           </Link>
-          <Link
-            href={`/${locale}#cohort`}
-            className="hidden rounded-full bg-[var(--foreground)] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-950/10 transition hover:-translate-y-0.5 sm:inline-flex"
-          >
-            {dictionary.navigation.join}
-          </Link>
+          <AuthNavControl locale={locale} dictionary={dictionary} />
         </div>
       </div>
     </header>
