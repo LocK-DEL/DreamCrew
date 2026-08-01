@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthNavControl } from "@/components/auth-nav-control";
 import type { DreamCrewDictionary, Locale } from "@/types/content";
 
 interface MobileNavProps {
@@ -11,7 +12,6 @@ const icons = {
   projects: "◇",
   publish: "+",
   collaborate: "✓",
-  profile: "○",
 };
 
 export function MobileNav({ locale, dictionary }: MobileNavProps) {
@@ -20,7 +20,6 @@ export function MobileNav({ locale, dictionary }: MobileNavProps) {
     [dictionary.navigation.projects, `/${locale}/projects`, icons.projects],
     [dictionary.navigation.publish, `/${locale}#cohort`, icons.publish],
     [dictionary.navigation.collaborate, `/${locale}#how-it-works`, icons.collaborate],
-    [dictionary.navigation.profile, `/${locale}#trust`, icons.profile],
   ];
 
   return (
@@ -40,6 +39,7 @@ export function MobileNav({ locale, dictionary }: MobileNavProps) {
           <span>{label}</span>
         </Link>
       ))}
+      <AuthNavControl locale={locale} dictionary={dictionary} compact />
     </nav>
   );
 }
