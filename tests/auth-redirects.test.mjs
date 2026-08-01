@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { safeAuthNextPath } from "../src/lib/auth/redirects.mjs";
+import {
+  localizedHomePath,
+  safeAuthNextPath,
+} from "../src/lib/auth/redirects.mjs";
 
 test("uses localized onboarding when no next path is supplied", () => {
   assert.equal(safeAuthNextPath(undefined, "zh"), "/zh/onboarding");
@@ -31,4 +34,10 @@ test("rejects external, protocol-relative, backslash, and cross-locale redirects
 test("normalizes unsupported locales to Chinese", () => {
   assert.equal(safeAuthNextPath("/fr/profile", "fr"), "/zh/onboarding");
   assert.equal(safeAuthNextPath("/zh/profile", "fr"), "/zh/profile");
+});
+
+test("returns a safe localized home path after sign-out", () => {
+  assert.equal(localizedHomePath("zh"), "/zh");
+  assert.equal(localizedHomePath("en-US"), "/en");
+  assert.equal(localizedHomePath("fr"), "/zh");
 });
