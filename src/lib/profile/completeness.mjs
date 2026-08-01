@@ -11,6 +11,7 @@ export function calculateProfileCompleteness(profile = {}, skills = []) {
   const missing = [];
 
   const identityComplete =
+    hasText(profile.handle) &&
     hasText(profile.display_name) &&
     hasText(profile.age_range) &&
     hasText(profile.identity_type) &&
