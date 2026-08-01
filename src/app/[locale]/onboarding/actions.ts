@@ -8,12 +8,59 @@ import { validateProfileStep } from "@/lib/profile/schema.mjs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Locale } from "@/types/content";
 
+interface IdentityValue {
+  display_name: string;
+  age_range: string;
+  identity_type: string;
+  country_code: string;
+  city: string;
+  timezone: string;
+  languages: string[];
+}
+
+interface SkillValue {
+  skill_id: number;
+  skill_level: string;
+  evidence_url: string | null;
+}
+
+interface SkillsValue {
+  skills: SkillValue[];
+  portfolio_url: string | null;
+  github_url: string | null;
+  linkedin_url: string | null;
+}
+
+interface CollaborationValue {
+  interests: string[];
+  weekly_hours: number;
+  collaboration_levels: string[];
+  bio: string;
+  is_public: boolean;
+}
+
 function localeFromForm(formData: FormData): Locale {
   return normalizeLocale(String(formData.get("locale") ?? "zh")) as Locale;
 }
 
 function validationFailure(errors?: Record<string, string>): OnboardingActionState {
   return { errors: errors ?? { _form: "save_failed" } };
+}
+
+function validationErrors(result: object): Record<string, string> | undefined {
+  if (!("errors" in result) || !result.errors || typeof result.errors !== "object") {
+    return undefined;
+  }
+
+  return result.errors as Record<string, string>;
+}
+
+function validationValue<T extends object>(result: object): T | null {
+  if (!("value" in result) || !result.value || typeof result.value !== "object") {
+    return null;
+  }
+
+  return result.value as T;
 }
 
 async function currentOnboardingStep(userId: string) {
@@ -41,9 +88,9 @@ export async function saveIdentityStep(
     timezone: formData.get("timezone"),
     languages: formData.getAll("languages"),
   });
+  const value = validationValue<IdentityValue>(result);
 
-  if (!result.ok || !result.value) return validationFailure(result.errors);
-  const value = result.value;
+  if (!result.ok || !value) return validationFailure(validationErrors(result));
 
   const supabase = await createServerSupabaseClient();
   const step = Math.max(await currentOnboardingStep(userId), 1);
@@ -74,9 +121,9 @@ export async function saveSkillsStep(
     github_url: formData.get("github_url"),
     linkedin_url: formData.get("linkedin_url"),
   });
+  const value = validationValue<SkillsValue>(result);
 
-  if (!result.ok || !result.value) return validationFailure(result.errors);
-  const value = result.value;
+  if (!result.ok || !value) return validationFailure(validationErrors(result));
 
   const supabase = await createServerSupabaseClient();
   const { error: skillError } = await supabase.rpc("replace_profile_skills", {
@@ -113,9 +160,9 @@ export async function saveCollaborationStep(
     bio: formData.get("bio"),
     is_public: formData.get("is_public"),
   });
+  const value = validationValue<CollaborationValue>(result);
 
-  if (!result.ok || !result.value) return validationFailure(result.errors);
-  const value = result.value;
+  if (!result.ok || !value) return validationFailure(validationErrors(result));
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase
