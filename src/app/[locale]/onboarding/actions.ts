@@ -12,6 +12,10 @@ function localeFromForm(formData: FormData): Locale {
   return normalizeLocale(String(formData.get("locale") ?? "zh")) as Locale;
 }
 
+function validationFailure(errors?: Record<string, string>): OnboardingActionState {
+  return { errors: errors ?? { _form: "save_failed" } };
+}
+
 async function currentOnboardingStep(userId: string) {
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase
@@ -38,16 +42,17 @@ export async function saveIdentityStep(
     languages: formData.getAll("languages"),
   });
 
-  if (!result.ok) return { errors: result.errors };
+  if (!result.ok || !result.value) return validationFailure(result.errors);
+  const value = result.value;
 
   const supabase = await createServerSupabaseClient();
   const step = Math.max(await currentOnboardingStep(userId), 1);
   const { error } = await supabase.from("profiles").upsert(
-    { user_id: userId, ...result.value, onboarding_step: step },
+    { user_id: userId, ...value, onboarding_step: step },
     { onConflict: "user_id" },
   );
 
-  if (error) return { errors: { _form: "save_failed" } };
+  if (error) return validationFailure();
   redirect(`/${locale}/onboarding?step=2`);
 }
 
@@ -70,19 +75,20 @@ export async function saveSkillsStep(
     linkedin_url: formData.get("linkedin_url"),
   });
 
-  if (!result.ok) return { errors: result.errors };
+  if (!result.ok || !result.value) return validationFailure(result.errors);
+  const value = result.value;
 
   const supabase = await createServerSupabaseClient();
   const { error: skillError } = await supabase.rpc("replace_profile_skills", {
-    skill_rows: result.value.skills,
+    skill_rows: value.skills,
   });
-  if (skillError) return { errors: { _form: "save_failed" } };
+  if (skillError) return validationFailure();
 
   const step = Math.max(await currentOnboardingStep(userId), 2);
   const profileLinks = {
-    portfolio_url: result.value.portfolio_url,
-    github_url: result.value.github_url,
-    linkedin_url: result.value.linkedin_url,
+    portfolio_url: value.portfolio_url,
+    github_url: value.github_url,
+    linkedin_url: value.linkedin_url,
     onboarding_step: step,
   };
   const { error: profileError } = await supabase
@@ -90,7 +96,7 @@ export async function saveSkillsStep(
     .update(profileLinks)
     .eq("user_id", userId);
 
-  if (profileError) return { errors: { _form: "save_failed" } };
+  if (profileError) return validationFailure();
   redirect(`/${locale}/onboarding?step=3`);
 }
 
@@ -108,14 +114,15 @@ export async function saveCollaborationStep(
     is_public: formData.get("is_public"),
   });
 
-  if (!result.ok) return { errors: result.errors };
+  if (!result.ok || !result.value) return validationFailure(result.errors);
+  const value = result.value;
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase
     .from("profiles")
-    .update({ ...result.value, onboarding_step: 3 })
+    .update({ ...value, onboarding_step: 3 })
     .eq("user_id", userId);
 
-  if (error) return { errors: { _form: "save_failed" } };
+  if (error) return validationFailure();
   redirect(`/${locale}/profile`);
 }
