@@ -2,7 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { normalizeLocale } from "@/lib/i18n.mjs";
-import { safeAuthNextPath } from "@/lib/auth/redirects.mjs";
+import {
+  localizedHomePath,
+  safeAuthNextPath,
+} from "@/lib/auth/redirects.mjs";
 import { hasSupabasePublicEnv } from "@/lib/env/supabase.mjs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -52,4 +55,15 @@ export async function requestMagicLink(formData: FormData) {
   }
 
   redirect(`/${locale}/auth/check-email`);
+}
+
+export async function signOut(formData: FormData) {
+  const locale = normalizeLocale(String(formData.get("locale") ?? "zh"));
+
+  if (hasSupabasePublicEnv()) {
+    const supabase = await createServerSupabaseClient();
+    await supabase.auth.signOut();
+  }
+
+  redirect(localizedHomePath(locale));
 }
