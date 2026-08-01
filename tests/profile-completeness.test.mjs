@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { calculateProfileCompleteness } from "../src/lib/profile/completeness.mjs";
 
 const requiredProfile = {
+  handle: "dream-builder",
   display_name: "Dream Builder",
   age_range: "21-24",
   identity_type: "student",
@@ -32,6 +33,13 @@ test("allows a public, completed, minimally credible profile to publish", () => 
   assert.equal(result.percentage, 75);
   assert.deepEqual(result.missing, ["bio", "avatar", "links"]);
   assert.equal(result.canPublish, true);
+});
+
+test("keeps profiles without a public handle from publishing", () => {
+  const result = calculateProfileCompleteness({ ...requiredProfile, handle: null }, oneSkill);
+  assert.equal(result.percentage, 45);
+  assert.equal(result.missing.includes("identity"), true);
+  assert.equal(result.canPublish, false);
 });
 
 test("keeps private or incomplete profiles from publishing", () => {
