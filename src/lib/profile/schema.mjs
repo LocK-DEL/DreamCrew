@@ -2,6 +2,7 @@ const AGE_RANGES = new Set(["18-20", "21-24", "25-30"]);
 const IDENTITY_TYPES = new Set(["student", "early-career", "freelancer", "founder"]);
 const SKILL_LEVELS = new Set(["beginner", "working", "advanced", "expert"]);
 const COLLABORATION_LEVELS = new Set(["interest", "short-term", "long-term"]);
+const HANDLE_PATTERN = /^[a-z0-9][a-z0-9_-]{2,29}$/;
 
 function text(value, maximum = Infinity) {
   const normalized = typeof value === "string" ? value.trim() : "";
@@ -40,6 +41,7 @@ function optionalHttpsUrl(value) {
 function validateStepOne(input) {
   const source = input && typeof input === "object" ? input : {};
   const errors = {};
+  const handle = text(source.handle, 30).toLowerCase();
   const displayName = text(source.display_name, 80);
   const ageRange = text(source.age_range);
   const identityType = text(source.identity_type);
@@ -48,6 +50,7 @@ function validateStepOne(input) {
   const timezone = text(source.timezone, 80);
   const languages = uniqueStrings(source.languages, 8, (item) => item.toLowerCase());
 
+  if (!HANDLE_PATTERN.test(handle)) errors.handle = "invalid_handle";
   if (!displayName) errors.display_name = "required";
   else if (displayName.length > 80) errors.display_name = "too_long";
   if (!AGE_RANGES.has(ageRange)) errors.age_range = "invalid_choice";
@@ -60,6 +63,7 @@ function validateStepOne(input) {
   return {
     ok: true,
     value: {
+      handle,
       display_name: displayName,
       age_range: ageRange,
       identity_type: identityType,
