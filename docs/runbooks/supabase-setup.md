@@ -26,11 +26,18 @@ The real values belong in `.env.local` for local development and in the deployme
 
 Requirements: Node.js 22+, npm, Git, and the database password saved when the project was created.
 
+On macOS or Linux, use the official Supabase CLI installation method. On Windows, Scoop is the most reliable option when the npm launcher cannot find the Windows binary:
+
+```powershell
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+supabase login
+```
+
 From the repository root:
 
 ```bash
-npx supabase@latest login
-npx supabase@latest link --project-ref YOUR_PROJECT_REF
+supabase link --project-ref YOUR_PROJECT_REF
 ```
 
 The login flow opens a browser or requests a Supabase personal access token. The link step may request the database password. Do not save either value in the repository.
@@ -40,7 +47,7 @@ The login flow opens a browser or requests a Supabase personal access token. The
 The repository is the schema source of truth. Apply the committed migrations in timestamp order and then insert the bilingual skill taxonomy:
 
 ```bash
-npx supabase@latest db push --include-seed
+supabase db push --include-seed
 ```
 
 Expected files:
@@ -62,6 +69,48 @@ Expected database objects:
 - ten active bilingual skill records.
 
 Do not recreate these tables manually in Table Editor. Future schema changes must be new migration files.
+
+### SQL Editor fallback
+
+If the CLI cannot reach the direct PostgreSQL endpoint, apply the files in this exact order through Dashboard → SQL Editor:
+
+1. `202608010001_auth_profiles.sql`;
+2. `202608010002_replace_profile_skills.sql`;
+3. `seed.sql`.
+
+On Windows PowerShell, read Chinese seed text explicitly as UTF-8:
+
+```powershell
+[System.IO.File]::ReadAllText(
+  (Resolve-Path .\supabase\seed.sql),
+  [System.Text.Encoding]::UTF8
+) | Set-Clipboard
+```
+
+Verify the hosted database:
+
+```sql
+select
+  to_regclass('public.profiles') as profiles,
+  to_regclass('public.skills') as skills,
+  to_regclass('public.profile_skills') as profile_skills;
+
+select count(*) as seeded_skills
+from public.skills;
+
+select
+  relname as table_name,
+  relrowsecurity as rls_enabled
+from pg_class
+where relname in ('profiles', 'skills', 'profile_skills')
+order by relname;
+
+select proname
+from pg_proc
+where proname = 'replace_profile_skills';
+```
+
+Expected: three non-null tables, ten skills, RLS `true` on all three tables, and the RPC name returned.
 
 ## 3. Configure authentication URLs
 
@@ -97,15 +146,23 @@ Also set the same production origin in the application environment:
 NEXT_PUBLIC_APP_URL=https://YOUR_DOMAIN
 ```
 
-## 4. Configure the Magic Link email template
+## 4. Magic Link email behavior
 
-Open:
+### Default Supabase email template
+
+No template change is required. DreamCrew supports the standard `{{ .ConfirmationURL }}` Magic Link. With `@supabase/ssr`, Supabase redirects to the localized confirmation route with a PKCE `code`; DreamCrew exchanges that code through `exchangeCodeForSession` and stores the session in cookies.
+
+New Supabase Free projects using the default email provider may show the message:
 
 ```text
-Authentication → Email Templates → Magic Link
+Set up custom SMTP to edit templates
 ```
 
-DreamCrew passes the complete localized confirmation route through `emailRedirectTo`, including the `next` query parameter. The template must append the token hash to `.RedirectTo`:
+That is expected. Leave the default template unchanged and continue testing.
+
+### Optional custom SMTP template
+
+After a custom SMTP provider is configured, DreamCrew also supports a token-hash template:
 
 ```html
 <h2>Sign in to DreamCrew</h2>
@@ -117,13 +174,10 @@ DreamCrew passes the complete localized confirmation route through `emailRedirec
 </p>
 ```
 
-Do not use only `{{ .ConfirmationURL }}` for this SSR flow. The application exchanges `token_hash` at:
+The confirmation route accepts either:
 
-```text
-/{locale}/auth/confirm
-```
-
-The confirmation route accepts only `type=email`, verifies the token with Supabase, creates the cookie-backed session, and then applies the validated local `next` path.
+- PKCE `code` from the default `ConfirmationURL`; or
+- `token_hash` plus `type=email` from a custom template.
 
 ## 5. Local application configuration
 
@@ -150,11 +204,11 @@ http://localhost:3000/zh/auth
 
 ## 6. End-to-end authentication check
 
-Use a real inbox you control:
+Use a real inbox you control and the same browser/device that requested the link, because the PKCE verifier is stored locally:
 
 1. request a magic link from `/zh/auth`;
 2. confirm the email arrives;
-3. open the link once;
+3. open the link once in the same browser;
 4. confirm the browser reaches `/zh/onboarding`;
 5. confirm a row exists in `Authentication → Users`;
 6. confirm a matching row exists in `Table Editor → profiles`;
@@ -201,9 +255,10 @@ GitHub Actions performs tests, lint, and the production build on every pull requ
 
 Check:
 
+- the branch includes default-template PKCE code support;
 - `NEXT_PUBLIC_APP_URL` uses the same origin as the browser;
 - the confirmation URL is in Supabase Redirect URLs;
-- the email template contains `.RedirectTo`, `.TokenHash`, and `type=email`;
+- the Magic Link was requested and opened in the same browser/device;
 - the link was not already used or expired.
 
 ### Public routes work but login is disabled
