@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const files = {
   newPage: new URL("../src/app/[locale]/projects/new/page.tsx", import.meta.url),
-  editPage: new URL("../src/app/[locale]/projects/[projectId]/edit/page.tsx", import.meta.url),
+  editPage: new URL("../src/app/[locale]/projects/[projectKey]/edit/page.tsx", import.meta.url),
   actions: new URL("../src/app/[locale]/projects/actions.ts", import.meta.url),
   editor: new URL("../src/components/projects/project-editor.tsx", import.meta.url),
 };
