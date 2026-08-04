@@ -18,9 +18,8 @@ interface OwnerProjectCardProps {
 
 const actionLabels = {
   zh: {
-    edit: "继续编辑",
+    edit: "继续编辑并发布",
     preview: "公开预览",
-    published: "发布",
     paused: "暂停招募",
     resume: "重新发布",
     closed: "结束招募",
@@ -29,9 +28,8 @@ const actionLabels = {
     updated: "更新于",
   },
   en: {
-    edit: "Continue editing",
+    edit: "Continue editing and publish",
     preview: "Public preview",
-    published: "Publish",
     paused: "Pause recruiting",
     resume: "Republish",
     closed: "Close recruiting",
@@ -44,7 +42,7 @@ const actionLabels = {
 function lifecycleActions(status: OwnerProjectCardData["status"]) {
   switch (status) {
     case "draft":
-      return [["published", "published"], ["archived", "archived"]] as const;
+      return [["archived", "archived"]] as const;
     case "published":
       return [["paused", "paused"], ["closed", "closed"]] as const;
     case "paused":
