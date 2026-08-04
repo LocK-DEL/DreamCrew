@@ -18,6 +18,7 @@ import {
   transitionOwnedProjectStatus,
   updateOwnedProject,
 } from "@/lib/projects/repository";
+import { loadProjectOwnerReadiness } from "@/lib/projects/viewer";
 import type { ProjectActionState } from "@/lib/projects/action-state";
 import type { Locale } from "@/types/content";
 import type { OwnedProjectRoleValue, ProjectDraftValue } from "@/types/projects";
@@ -161,6 +162,15 @@ export async function saveProjectDraft(
     if (!publishResult.ok) {
       return { ok: false, message: "invalid-form", fieldErrors: validationErrors(publishResult) };
     }
+
+    const ownerReadiness = await loadProjectOwnerReadiness(userId);
+    if (!ownerReadiness.ready) {
+      return {
+        ok: false,
+        message: "invalid-form",
+        fieldErrors: { profile: ownerReadiness.reason },
+      };
+    }
   }
 
   const saveResult = projectId
@@ -214,6 +224,9 @@ export async function changeProjectStatus(formData: FormData) {
   if (!validUuid(projectId)) return { ok: false, message: "invalid-form" };
   const current = await loadOwnedProjectEditor(userId, projectId);
   const currentStatus = String(current.data?.status ?? "");
+  if (currentStatus === "draft" && nextStatus === "published") {
+    return { ok: false, message: "publish-from-editor-required" };
+  }
   if (current.error || !canTransitionProjectStatus(currentStatus, nextStatus)) {
     return { ok: false, message: "invalid-form" };
   }
