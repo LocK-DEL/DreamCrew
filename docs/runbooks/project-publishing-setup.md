@@ -100,7 +100,7 @@ Create a new SQL query, paste, and run it. Expected result:
 Success. No rows returned
 ```
 
-Do not recreate these tables manually in Table Editor. Future schema changes must be new forward migration files.
+The RPC rejects missing or SQL `NULL` role payloads before deleting any existing roles. Do not recreate these tables manually in Table Editor. Future schema changes must be new forward migration files.
 
 ## 3. Verify hosted database objects
 
@@ -230,15 +230,17 @@ Use a real account whose profile is complete, public, and has a stable public ha
 6. Confirm the project appears in the marketplace and `/{locale}/projects/{slug}` loads publicly.
 7. Confirm the public page contains no email, owner UUID, project UUID, auth token, onboarding state, or internal timestamps.
 
-### Pause, resume, close, and archive
+### Pause, republish through the editor, close, and archive
 
 1. Sign in as user A and open **My projects**.
 2. Pause a published project. It must disappear from public discovery.
-3. Republish the paused project. It must return to public discovery.
+3. Open the paused project's editor, review its current disclosures, and use **Save and publish**. It must return to public discovery.
 4. Close the project. Its public detail remains readable, clearly states that recruiting has ended, and it no longer appears as actively recruiting.
 5. Archive only when the project should become private historical owner data.
 
-Draft publishing is intentionally available only from the editor so full validation cannot be bypassed from the dashboard.
+Every transition into `published`, including republishing a paused project, is intentionally available only from the editor. This ensures the complete project, role, profile-readiness, and disclosure checks cannot be bypassed from the dashboard.
+
+A currently published or closed project also retains publish-level validation on every save. It cannot remain publicly readable after its required disclosure or open-role data has been edited into an invalid state. Closed and archived projects cannot be reopened directly.
 
 ## 6. Publishing eligibility verification
 
@@ -251,10 +253,10 @@ Project drafts may be saved by an authenticated user, but public publishing requ
 Test each failure state:
 
 1. set user A's profile private and try to publish;
-2. confirm the project remains a draft;
+2. confirm the project remains a draft or paused project;
 3. make the profile public again;
 4. complete any missing onboarding field;
-5. publish successfully.
+5. publish successfully through the editor.
 
 This prevents a published project from referencing an owner profile that anonymous visitors cannot safely inspect.
 
@@ -295,7 +297,7 @@ npm run build
 git diff --check
 ```
 
-GitHub Actions runs tests, ESLint, and the Next.js production build on every update to PR #3.
+GitHub Actions runs tests, ESLint, and the Next.js production build on every update to PR #3. The latest verified behavior revision passed 102 tests, ESLint, and the production build.
 
 ## 10. Troubleshooting
 
@@ -319,7 +321,9 @@ Confirm:
 - evidence links use HTTPS;
 - weekly hours are between 1 and 40;
 - a long-term venture includes founder contribution, risk disclosure, compensation details, and at least five weekly hours;
-- the owner profile is complete and public.
+- the owner profile is complete and public;
+- the project status is `draft`, `paused`, or already `published`;
+- the publish action was used inside the editor, not from a lifecycle shortcut.
 
 ### Project detail is not found
 
