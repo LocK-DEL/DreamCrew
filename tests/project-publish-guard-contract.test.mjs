@@ -1,0 +1,31 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const actionsPath = new URL("../src/app/[locale]/projects/actions.ts", import.meta.url);
+const ownerCardPath = new URL("../src/components/projects/owner-project-card.tsx", import.meta.url);
+const viewerPath = new URL("../src/lib/projects/viewer.ts", import.meta.url);
+
+async function source(path) {
+  return (await readFile(path, "utf8")).replace(/\s+/g, " ");
+}
+
+test("requires a complete public owner profile before editor publishing", async () => {
+  const [actions, viewer] = await Promise.all([source(actionsPath), source(viewerPath)]);
+
+  assert.match(viewer, /export async function loadProjectOwnerReadiness\(userId/);
+  assert.match(viewer, /projectOwnerReadiness/);
+  assert.match(actions, /loadProjectOwnerReadiness\(userId\)/);
+  assert.match(actions, /ownerReadiness\.ready/);
+  assert.match(actions, /ownerReadiness\.reason/);
+  assert.match(actions, /fieldErrors: \{ profile: ownerReadiness\.reason/);
+});
+
+test("prevents the dashboard lifecycle action from bypassing publish validation", async () => {
+  const [actions, card] = await Promise.all([source(actionsPath), source(ownerCardPath)]);
+
+  assert.match(actions, /currentStatus === "draft" && nextStatus === "published"/);
+  assert.match(actions, /publish-from-editor-required/);
+  assert.match(card, /case "draft": return \[\["archived", "archived"\]\]/);
+  assert.doesNotMatch(card, /case "draft": return \[\["published"/);
+});
