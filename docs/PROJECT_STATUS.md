@@ -5,8 +5,8 @@
 - GitHub repository: `LocK-DEL/DreamCrew` (public)
 - Active development branch: `agent/project-publishing`
 - Draft pull request: `#3 — feat: add real project publishing and marketplace`
-- Latest fully verified behavior commit before documentation updates: `3a38e5cf6a00c6021353908bc04f0bb96fd79aa9`
-- Latest verified CI run for that commit: `30879749779`
+- Latest fully verified behavior commit before documentation updates: `bacaccb682fd21ea64be8c2001e77e2d62a5f7a6`
+- Latest verified CI run for that commit: `30880586092`
 - Phase 2 merge commit on `main`: `87855ec8b2dc98332393a274b850122234bd0564`
 - Phase 1 merge commit on `main`: `610210d4aa852443b6d182f8c6dcfcf817cb8e5c`
 
@@ -38,7 +38,9 @@ Hosted profile migrations and bilingual skill seed data were applied manually th
 - Added safe public slug normalization.
 - Added pure validation for drafts, publish requirements, structured roles, HTTPS evidence links, numeric limits, long-term venture disclosures, and lifecycle transitions.
 - Added a publishing eligibility rule: public publishing requires a complete, public owner profile with a valid public handle.
-- Draft saving remains available before every publish-only field is complete.
+- Draft and paused projects can save incomplete private work.
+- Published and closed projects retain publish-level validation on every save, preventing public records from being edited into an invalid disclosure state.
+- Only draft, paused, or already-published projects can use the editor's publish action. Closed and archived projects cannot be reopened directly.
 
 ### Database and RLS
 
@@ -50,7 +52,7 @@ Hosted profile migrations and bilingual skill seed data were applied manually th
 - Added lifecycle, field, enumeration, length, numeric, and JSON constraints.
 - Added timestamp triggers and indexes supporting owner dashboards, public discovery, filtering, and role lookup.
 - Added atomic `replace_project_roles(uuid, jsonb)` as a security-invoker RPC.
-- The RPC derives the user only from `auth.uid()` and never accepts a caller-supplied owner ID.
+- The RPC derives the user only from `auth.uid()`, never accepts a caller-supplied owner ID, and rejects SQL `NULL` or non-array role payloads before deleting existing roles.
 - No project-delete privilege is granted through the application role.
 
 ### Project creation and ownership
@@ -65,13 +67,14 @@ Hosted profile migrations and bilingual skill seed data were applied manually th
 - Added save-draft and save-and-publish actions.
 - All writes derive the owner from verified authenticated claims.
 - Duplicate slugs receive safe suffix retries.
-- Drafts cannot bypass full publish validation through the owner dashboard.
+- Every transition into `published`, including republishing a paused project, must go through the editor's complete project, role, profile-readiness, and disclosure validation.
+- The owner dashboard cannot bypass publish validation.
 - Added `/{locale}/my/projects` grouped by draft, published, paused, closed, and archived states.
-- Added pause, resume, close, and archive controls constrained by legal lifecycle transitions.
+- Added pause, close, and archive controls constrained by legal lifecycle transitions; republishing is performed through the editor.
 
 ### Public project experience
 
-- Added strict public projections that exclude owner UUID, project UUID, role UUID, email, onboarding internals, private notes, moderation fields, and raw database timestamps.
+- Added strict application projections that exclude owner UUID, project UUID, role UUID, email, onboarding internals, private notes, moderation fields, and raw database timestamps from rendered public payloads.
 - Added public project details at `/{locale}/projects/{slug}`.
 - Detail pages show founder public profile, problem, audience, expected outcome, founder contribution, first milestone, resources, risks, evidence links, structured roles, time requirements, collaboration level, and compensation disclosure.
 - Closed projects remain readable as public records but clearly state that recruiting has ended.
@@ -90,10 +93,10 @@ Hosted profile migrations and bilingual skill seed data were applied manually th
 
 ## Fresh automated verification
 
-GitHub Actions run `30879749779` completed successfully for commit `3a38e5cf6a00c6021353908bc04f0bb96fd79aa9`:
+GitHub Actions run `30880586092` completed successfully for behavior commit `bacaccb682fd21ea64be8c2001e77e2d62a5f7a6`:
 
 - dependency installation: PASS;
-- `npm test`: PASS — 98 tests, 0 failures;
+- `npm test`: PASS — 102 tests, 0 failures;
 - `npm run lint`: PASS;
 - `npm run build`: PASS;
 - Next.js compiled public marketplace, public project detail, protected creator/editor, owner dashboard, auth/profile routes, and the session proxy.
@@ -150,9 +153,10 @@ After database verification, run the real lifecycle:
 ```text
 user A saves private draft
 → anonymous user cannot read it
-→ user A completes and publishes it
+→ user A completes and publishes it through the editor
 → anonymous user can read card/detail
-→ user A pauses and republishes it
+→ user A pauses it
+→ user A reviews and republishes it through the editor
 → user A closes it
 → user B cannot edit A's project or roles
 ```
@@ -196,6 +200,7 @@ A new assistant, Codex session, or developer must:
 - Phase 3 hosted runbook: `docs/runbooks/project-publishing-setup.md`
 - Project constants: `src/lib/projects/constants.mjs`
 - Project validation: `src/lib/projects/validation.mjs`
+- Project save policy: `src/lib/projects/save-policy.mjs`
 - Owner publishing eligibility: `src/lib/projects/owner-readiness.mjs`
 - Project repository: `src/lib/projects/repository.ts`
 - Public project projection: `src/lib/projects/public-view.mjs`
