@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   canPublishProjectStatus,
   requiresPublishValidation,
-} from "../src/lib/projects/validation.mjs";
+} from "../src/lib/projects/save-policy.mjs";
 
 test("allows incomplete saves only for private draft and paused states", () => {
   assert.equal(requiresPublishValidation("draft", "save"), false);
