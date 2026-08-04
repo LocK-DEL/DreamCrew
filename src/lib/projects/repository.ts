@@ -137,12 +137,15 @@ export async function loadPublicProjects(
   return { ok: true, configured: true, projects };
 }
 
-export async function loadPublicProjectBySlug(slugValue: unknown): Promise<PublicProjectResult> {
+export async function loadPublicProjectBySlug(
+  slugValue: unknown,
+  locale: string = "zh",
+): Promise<PublicProjectResult> {
   const slug = normalizeProjectSlug(slugValue);
   if (!slug) return { ok: true, configured: hasSupabasePublicEnv(), project: null };
 
   if (!hasSupabasePublicEnv()) {
-    const project = demoProjectViews("zh").find((item) => item.slug === slug) ?? null;
+    const project = demoProjectViews(locale).find((item) => item.slug === slug) ?? null;
     return { ok: true, configured: false, project };
   }
 
