@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 const repositoryPath = new URL("../src/lib/projects/repository.ts", import.meta.url);
 
 async function source() {
-  return readFile(repositoryPath, "utf8");
+  return (await readFile(repositoryPath, "utf8")).replace(/\s+/g, " ");
 }
 
 test("uses explicit public project columns and caps marketplace results", async () => {
@@ -22,11 +22,11 @@ test("uses explicit public project columns and caps marketplace results", async 
 test("keeps owner reads and writes scoped to the authenticated user", async () => {
   const code = await source();
 
-  assert.match(code, /export async function loadOwnedProjects\(userId/);
-  assert.match(code, /export async function loadOwnedProjectEditor\(userId, projectId/);
-  assert.match(code, /export async function createOwnedProjectDraft\(userId, value, slug/);
-  assert.match(code, /export async function updateOwnedProject\(userId, projectId, value/);
-  assert.match(code, /export async function transitionOwnedProjectStatus\(userId, projectId, nextStatus/);
+  assert.match(code, /export async function loadOwnedProjects\(userId: string/);
+  assert.match(code, /export async function loadOwnedProjectEditor\(userId: string, projectId: string/);
+  assert.match(code, /export async function createOwnedProjectDraft\( userId: string, value: ProjectDraftValue, slug: string/);
+  assert.match(code, /export async function updateOwnedProject\( userId: string, projectId: string, value: ProjectDraftValue/);
+  assert.match(code, /export async function transitionOwnedProjectStatus\( userId: string, projectId: string, nextStatus: string/);
   assert.match(code, /\.eq\("owner_id", userId\)/);
   assert.doesNotMatch(code, /service_role|sb_secret_/);
 });
