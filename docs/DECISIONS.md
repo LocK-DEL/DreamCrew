@@ -55,3 +55,33 @@ This file records durable decisions that future sessions must not silently rever
 **Decision:** `AGENTS.md` and `docs/PROJECT_STATUS.md` are mandatory handoff files and must be updated in every development session.
 
 **Reason:** Chat sessions and coding-agent contexts are temporary; the repository must retain exact progress and next actions.
+
+## D-010 — Supabase SSR authentication boundary
+
+**Decision:** Use `@supabase/ssr` with separate browser, server, and Next.js 16 proxy clients. Server authorization verifies `auth.getClaims()` and never trusts `getSession()` as identity proof.
+
+**Reason:** Cookie refresh and authorization have different responsibilities. Verified claims prevent stale or client-supplied session state from becoming an authorization decision.
+
+## D-011 — Database security from the first migration
+
+**Decision:** Every exposed `public` table enables Row Level Security before application access is granted. Owner checks use `(select auth.uid())`, policies name explicit roles, and users never submit another user's ID through profile forms.
+
+**Reason:** Retrofitting RLS after real data exists creates avoidable privacy and privilege-escalation risk.
+
+## D-012 — Public profile projection
+
+**Decision:** Public profiles are loaded with explicit database columns and transformed through a privacy projection before rendering. Email, tokens, user UUIDs, onboarding state, timestamps, and moderation data never enter the page model.
+
+**Reason:** RLS controls which rows may be read; a separate projection controls which fields may be displayed or serialized.
+
+## D-013 — Stable public usernames
+
+**Decision:** Every completed profile chooses a unique, lowercase 3–30 character handle made from letters, numbers, underscores, or hyphens. The handle is required for profile completeness and public profile URLs.
+
+**Reason:** Public pages need stable shareable URLs that do not expose auth user IDs or depend on mutable display names.
+
+## D-014 — Versioned database deployment
+
+**Decision:** The committed `supabase/migrations` files and `supabase/seed.sql` are the database source of truth. Hosted schema changes are deployed through the Supabase CLI rather than manually recreating tables in the Dashboard.
+
+**Reason:** Versioned migration history keeps local, preview, and production environments reproducible and prevents remote schema drift.
