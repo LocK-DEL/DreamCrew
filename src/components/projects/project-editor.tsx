@@ -40,6 +40,7 @@ export function ProjectEditor({
   skills,
 }: ProjectEditorProps) {
   const copy = projectCopy[locale];
+  const errorMessages = copy.errors as Record<string, string>;
   const router = useRouter();
   const [roles, setRoles] = useState<OwnedProjectRoleValue[]>(initialRoles.length ? initialRoles : [blankRole()]);
   const [state, formAction, pending] = useActionState(saveProjectDraft, initialProjectActionState);
@@ -187,7 +188,7 @@ export function ProjectEditor({
 
       {state.message ? (
         <p role="status" className={`rounded-2xl px-5 py-4 text-sm font-bold ${state.ok ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
-          {copy.errors[state.message] ?? (state.message === "published" ? copy.published : copy.saved)}
+          {errorMessages[state.message] ?? (state.message === "published" ? copy.published : copy.saved)}
         </p>
       ) : null}
 
