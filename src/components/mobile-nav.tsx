@@ -11,15 +11,16 @@ const icons = {
   home: "⌂",
   projects: "◇",
   publish: "+",
-  collaborate: "✓",
+  manage: "▦",
 };
 
 export function MobileNav({ locale, dictionary }: MobileNavProps) {
+  const myProjectsLabel = locale === "zh" ? "我的项目" : "My projects";
   const items = [
     [dictionary.navigation.home, `/${locale}`, icons.home],
     [dictionary.navigation.projects, `/${locale}/projects`, icons.projects],
-    [dictionary.navigation.publish, `/${locale}#cohort`, icons.publish],
-    [dictionary.navigation.collaborate, `/${locale}#how-it-works`, icons.collaborate],
+    [dictionary.navigation.publish, `/${locale}/projects/new`, icons.publish],
+    [myProjectsLabel, `/${locale}/my/projects`, icons.manage],
   ];
 
   return (
