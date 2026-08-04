@@ -28,8 +28,8 @@ const blankRole = (): OwnedProjectRoleValue => ({
   status: "open",
 });
 
-function optionLabel(option: readonly [string, string, string], locale: "zh" | "en") {
-  return locale === "zh" ? option[1] : option[2];
+function optionLabel(option: readonly string[], locale: "zh" | "en") {
+  return String(locale === "zh" ? option[1] : option[2]);
 }
 
 export function ProjectEditor({
