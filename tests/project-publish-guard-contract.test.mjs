@@ -31,3 +31,14 @@ test("prevents every dashboard lifecycle action from bypassing publish validatio
   assert.doesNotMatch(card, /case "draft": return \[\["published"/);
   assert.doesNotMatch(card, /case "paused": return \[\["published"/);
 });
+
+test("loads current owner state and preserves publish requirements on public saves", async () => {
+  const actions = await source(actionsPath);
+
+  assert.match(actions, /requiresPublishValidation/);
+  assert.match(actions, /canPublishProjectStatus/);
+  assert.match(actions, /loadOwnedProjectEditor\(userId, projectId\)/);
+  assert.match(actions, /currentStatus/);
+  assert.match(actions, /status-cannot-publish/);
+  assert.match(actions, /validateProjectForPublish\(draftValue, roles\)/);
+});
