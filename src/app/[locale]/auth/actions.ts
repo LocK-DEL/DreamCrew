@@ -6,6 +6,7 @@ import {
   localizedHomePath,
   safeAuthNextPath,
 } from "@/lib/auth/redirects.mjs";
+import { classifyAuthSendError } from "@/lib/auth/send-error.mjs";
 import { hasSupabasePublicEnv } from "@/lib/env/supabase.mjs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -51,7 +52,12 @@ export async function requestMagicLink(formData: FormData) {
   });
 
   if (error) {
-    redirect(authPage(locale, "send-failed", nextPath));
+    const safeError = error as { code?: string; status?: number; name?: string };
+    console.warn("[DreamCrew auth] Magic-link send failed", {
+      code: safeError.code ?? safeError.name ?? "unknown",
+      status: safeError.status ?? null,
+    });
+    redirect(authPage(locale, classifyAuthSendError(error), nextPath));
   }
 
   redirect(`/${locale}/auth/check-email`);
