@@ -1,5 +1,6 @@
 import { hasSupabasePublicEnv } from "@/lib/env/supabase.mjs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { projectOwnerReadiness } from "./owner-readiness.mjs";
 
 export interface ProjectMatchViewer {
   completed: boolean;
@@ -11,8 +12,31 @@ export interface ProjectMatchViewer {
   timezone: string;
 }
 
+export type ProjectOwnerReadiness =
+  | { ready: true; reason: null }
+  | {
+      ready: false;
+      reason: "complete-profile-required" | "public-profile-required" | "public-handle-required";
+    };
+
 function strings(value: unknown) {
   return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+}
+
+export async function loadProjectOwnerReadiness(userId: string): Promise<ProjectOwnerReadiness> {
+  if (!userId || !hasSupabasePublicEnv()) {
+    return { ready: false, reason: "complete-profile-required" };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("onboarding_step,is_public,handle")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) return { ready: false, reason: "complete-profile-required" };
+  return projectOwnerReadiness(data) as ProjectOwnerReadiness;
 }
 
 export async function loadProjectMatchViewer(userId: string | null): Promise<ProjectMatchViewer | null> {
