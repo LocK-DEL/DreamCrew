@@ -24,11 +24,17 @@ export default async function AuthPage({ params, searchParams }: AuthPageProps) 
       ? copy.invalidEmail
       : errorCode === "invalid-link"
         ? copy.invalidLink
-        : errorCode === "send-failed"
-          ? copy.sendFailed
-          : errorCode === "configuration-unavailable"
-            ? copy.unavailable
-            : "";
+        : errorCode === "email-not-authorized"
+          ? copy.emailNotAuthorized
+          : errorCode === "rate-limited"
+            ? copy.rateLimited
+            : errorCode === "email-disabled"
+              ? copy.emailDisabled
+              : errorCode === "send-failed"
+                ? copy.sendFailed
+                : errorCode === "configuration-unavailable"
+                  ? copy.unavailable
+                  : "";
 
   return (
     <main className="px-5 py-16 lg:px-8 lg:py-24">
