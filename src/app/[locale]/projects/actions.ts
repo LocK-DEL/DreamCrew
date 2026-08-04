@@ -224,7 +224,7 @@ export async function changeProjectStatus(formData: FormData) {
   if (!validUuid(projectId)) return { ok: false, message: "invalid-form" };
   const current = await loadOwnedProjectEditor(userId, projectId);
   const currentStatus = String(current.data?.status ?? "");
-  if (currentStatus === "draft" && nextStatus === "published") {
+  if (nextStatus === "published") {
     return { ok: false, message: "publish-from-editor-required" };
   }
   if (current.error || !canTransitionProjectStatus(currentStatus, nextStatus)) {
