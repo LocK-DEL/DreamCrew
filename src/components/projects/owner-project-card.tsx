@@ -21,7 +21,6 @@ const actionLabels = {
     edit: "继续编辑并发布",
     preview: "公开预览",
     paused: "暂停招募",
-    resume: "重新发布",
     closed: "结束招募",
     archived: "归档",
     roles: "个招募角色",
@@ -31,7 +30,6 @@ const actionLabels = {
     edit: "Continue editing and publish",
     preview: "Public preview",
     paused: "Pause recruiting",
-    resume: "Republish",
     closed: "Close recruiting",
     archived: "Archive",
     roles: "recruiting roles",
@@ -46,7 +44,7 @@ function lifecycleActions(status: OwnerProjectCardData["status"]) {
     case "published":
       return [["paused", "paused"], ["closed", "closed"]] as const;
     case "paused":
-      return [["published", "resume"], ["closed", "closed"], ["archived", "archived"]] as const;
+      return [["closed", "closed"], ["archived", "archived"]] as const;
     case "closed":
       return [["archived", "archived"]] as const;
     default:
