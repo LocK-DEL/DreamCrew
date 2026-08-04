@@ -9,6 +9,7 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
   const alternateLocale = locale === "zh" ? "en" : "zh";
+  const myProjectsLabel = locale === "zh" ? "我的项目" : "My projects";
 
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[rgba(248,247,244,0.86)] backdrop-blur-xl">
@@ -23,15 +24,21 @@ export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-semibold text-[var(--muted)] md:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-6 text-sm font-semibold text-[var(--muted)] md:flex" aria-label="Primary navigation">
           <Link className="transition-colors hover:text-[var(--foreground)]" href={`/${locale}`}>
             {dictionary.navigation.home}
           </Link>
           <Link className="transition-colors hover:text-[var(--foreground)]" href={`/${locale}/projects`}>
             {dictionary.navigation.projects}
           </Link>
-          <Link className="transition-colors hover:text-[var(--foreground)]" href={`/${locale}#how-it-works`}>
-            {dictionary.navigation.collaborate}
+          <Link className="transition-colors hover:text-[var(--foreground)]" href={`/${locale}/my/projects`}>
+            {myProjectsLabel}
+          </Link>
+          <Link
+            className="rounded-full bg-indigo-600 px-4 py-2 font-black text-white transition hover:bg-indigo-700"
+            href={`/${locale}/projects/new`}
+          >
+            + {dictionary.navigation.publish}
           </Link>
         </nav>
 

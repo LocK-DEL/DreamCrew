@@ -1,71 +1,130 @@
 # DreamCrew Project Status
 
-- Last updated: 2026-08-02 (Asia/Taipei)
-- Product stage: Phase 2 code complete; hosted database activated; real Magic Link and two-user RLS verification pending
+- Last updated: 2026-08-04 (Asia/Taipei)
+- Product stage: Phase 3 code complete; hosted project migrations and two-user project RLS verification pending
 - GitHub repository: `LocK-DEL/DreamCrew` (public)
-- Active development branch: `agent/auth-profile`
-- Draft pull request: `#2 — feat: add Supabase authentication and profile foundation`
-- Latest verified auth compatibility commit: `bc4119363548197f91e8902f0eb2e4383d425582`
-- Latest verified CI run for that commit: `30731590930`
+- Active development branch: `agent/project-publishing`
+- Draft pull request: `#3 — feat: add real project publishing and marketplace`
+- Latest fully verified behavior commit before documentation updates: `bacaccb682fd21ea64be8c2001e77e2d62a5f7a6`
+- Latest verified CI run for that commit: `30880586092`
+- Phase 2 merge commit on `main`: `87855ec8b2dc98332393a274b850122234bd0564`
 - Phase 1 merge commit on `main`: `610210d4aa852443b6d182f8c6dcfcf817cb8e5c`
 
 ## Current objective
 
-Complete the real hosted authentication flow with Supabase's default Free-tier Magic Link template, finish one-user onboarding/sign-out verification, then run the two-user Row Level Security checks before deciding whether PR #2 is ready to merge.
+Apply the two Phase 3 migrations to the hosted Supabase project, verify the real draft/publish/lifecycle flow with user A, verify cross-owner denial with user B, then decide whether PR #3 is ready to merge.
 
-## Completed in Phase 2 code
+## Phase 2 completion
 
-- Added `@supabase/ssr` and `@supabase/supabase-js` with a strict public environment boundary.
-- Added separate browser, server, and request-proxy Supabase clients.
-- Added Next.js 16 `src/proxy.ts` for cookie-backed session refresh while preserving public routes when Supabase is unconfigured.
-- Added server-side identity verification through `auth.getClaims()`; authorization never trusts `getSession()`.
-- Added safe localized auth redirects that reject external, protocol-relative, cross-locale, and backslash paths.
-- Added localized email Magic Link request, confirmation, check-email, and sign-out flows.
-- Added support for both Magic Link confirmation modes:
-  - default Supabase `ConfirmationURL` returning a PKCE `code`, exchanged with `exchangeCodeForSession`;
-  - optional custom SMTP template returning `token_hash` plus `type=email`, verified with `verifyOtp`.
-- Added `profiles`, `skills`, and `profile_skills` migrations with Row Level Security enabled from the first migration.
-- Added explicit anonymous/public-read and authenticated owner-write policies using `(select auth.uid())`.
-- Added new-user profile creation trigger, timestamp triggers, indexes, bilingual skill seed data, and atomic `replace_profile_skills(jsonb)`.
-- Added three-step Chinese/English onboarding, unique public handles, profile completeness, public profiles, private owner previews, editing, and sign-out.
-- Added privacy-safe public projections excluding email, tokens, user UUID, onboarding state, timestamps, and moderation fields.
+Phase 2 was squash-merged into `main` after the user confirmed that the site, Magic Link registration, and login worked in the hosted environment.
 
-## Hosted Supabase completed
+Phase 2 includes:
 
-The user created and linked hosted project reference `imbgufhvigqdnupolxmm`.
+- Supabase SSR clients and Next.js 16 session proxy;
+- server identity verification through `auth.getClaims()`;
+- default Supabase Magic Link PKCE-code confirmation plus optional token-hash confirmation;
+- RLS-protected profiles, skills, and profile skills;
+- three-step bilingual onboarding;
+- public/private profile behavior;
+- public-handle ownership and sign-out.
 
-Because the direct PostgreSQL CLI connection terminated on the user's network, the user applied the files through Supabase SQL Editor in this order:
+Hosted profile migrations and bilingual skill seed data were applied manually through SQL Editor because the user's network terminated direct PostgreSQL CLI connections.
 
-1. `supabase/migrations/202608010001_auth_profiles.sql`;
-2. `supabase/migrations/202608010002_replace_profile_skills.sql`;
-3. `supabase/seed.sql` read explicitly as UTF-8 on Windows.
+## Completed in Phase 3 code
 
-The user confirmed the hosted checks:
+### Project domain and lifecycle
 
-- `profiles`, `skills`, and `profile_skills` exist;
-- ten bilingual skill rows exist;
-- RLS is enabled on all three tables;
-- `replace_profile_skills` exists.
+- Added stable project categories, stages, languages, collaboration levels, location modes, compensation types, statuses, and legal status transitions.
+- Added safe public slug normalization.
+- Added pure validation for drafts, publish requirements, structured roles, HTTPS evidence links, numeric limits, long-term venture disclosures, and lifecycle transitions.
+- Added a publishing eligibility rule: public publishing requires a complete, public owner profile with a valid public handle.
+- Draft and paused projects can save incomplete private work.
+- Published and closed projects retain publish-level validation on every save, preventing public records from being edited into an invalid disclosure state.
+- Only draft, paused, or already-published projects can use the editor's publish action. Closed and archived projects cannot be reopened directly.
 
-No database password, service-role key, secret key, or real `.env.local` value has been committed.
+### Database and RLS
 
-## Free-tier email-template compatibility
+- Added `public.projects` and `public.project_roles` migrations.
+- Enabled RLS on both tables immediately.
+- Added anonymous/authenticated public reads only for published or closed projects.
+- Added owner-only project inserts and updates using `(select auth.uid())`.
+- Added parent-owner checks for every project-role write.
+- Added lifecycle, field, enumeration, length, numeric, and JSON constraints.
+- Added timestamp triggers and indexes supporting owner dashboards, public discovery, filtering, and role lookup.
+- Added atomic `replace_project_roles(uuid, jsonb)` as a security-invoker RPC.
+- The RPC derives the user only from `auth.uid()`, never accepts a caller-supplied owner ID, and rejects SQL `NULL` or non-array role payloads before deleting existing roles.
+- No project-delete privilege is granted through the application role.
 
-Supabase projects created on the Free tier after the June 2026 policy change cannot edit authentication email templates while using Supabase's default email provider. The dashboard correctly shows `Set up custom SMTP to edit templates`.
+### Project creation and ownership
 
-DreamCrew no longer requires a custom template. The default `{{ .ConfirmationURL }}` flow is supported through PKCE code exchange. Custom SMTP and the token-hash template remain optional for future branded production email.
+- Added protected project creation at `/{locale}/projects/new`.
+- Added protected owner editing at `/{locale}/projects/{project-uuid}/edit`.
+- Added a four-section bilingual editor:
+  1. project identity;
+  2. problem and outcome;
+  3. repeatable structured roles;
+  4. collaboration and compensation disclosure.
+- Added save-draft and save-and-publish actions.
+- All writes derive the owner from verified authenticated claims.
+- Duplicate slugs receive safe suffix retries.
+- Every transition into `published`, including republishing a paused project, must go through the editor's complete project, role, profile-readiness, and disclosure validation.
+- The owner dashboard cannot bypass publish validation.
+- Added `/{locale}/my/projects` grouped by draft, published, paused, closed, and archived states.
+- Added pause, close, and archive controls constrained by legal lifecycle transitions; republishing is performed through the editor.
+
+### Public project experience
+
+- Added strict application projections that exclude owner UUID, project UUID, role UUID, email, onboarding internals, private notes, moderation fields, and raw database timestamps from rendered public payloads.
+- Added public project details at `/{locale}/projects/{slug}`.
+- Detail pages show founder public profile, problem, audience, expected outcome, founder contribution, first milestone, resources, risks, evidence links, structured roles, time requirements, collaboration level, and compensation disclosure.
+- Closed projects remain readable as public records but clearly state that recruiting has ended.
+- The application action remains an explicit Phase 4 placeholder.
+
+### Real marketplace
+
+- Replaced the static project-page implementation with hosted Supabase queries.
+- Added URL-driven filters for category, stage, collaboration level, location mode, and sort order.
+- Added explicit real-project, empty, read-failure, and example states.
+- Demo content is always labeled as an example and is never used to disguise a failed hosted query.
+- Added deterministic project matching for complete profiles.
+- Match cards show bounded scores, reasons, and cautions; weak matches remain visible and are never automatically rejected.
+- Updated the landing page so example cards are clearly identified as examples rather than real recruitment.
+- Updated desktop and mobile navigation to point to the real project creator and owner dashboard.
 
 ## Fresh automated verification
 
-GitHub Actions run `30731590930` completed successfully for commit `bc4119363548197f91e8902f0eb2e4383d425582`:
+GitHub Actions run `30880586092` completed successfully for behavior commit `bacaccb682fd21ea64be8c2001e77e2d62a5f7a6`:
 
 - dependency installation: PASS;
-- `npm test`: PASS — 45 tests, 0 failures;
+- `npm test`: PASS — 102 tests, 0 failures;
 - `npm run lint`: PASS;
 - `npm run build`: PASS;
-- Next.js confirmation route compiles with both PKCE-code and token-hash paths.
+- Next.js compiled public marketplace, public project detail, protected creator/editor, owner dashboard, auth/profile routes, and the session proxy.
 
-A documentation update after this verified commit triggers another CI run but does not change application behavior.
+Documentation updates after that behavior commit trigger additional CI runs but do not change the verified runtime behavior.
+
+## Hosted Supabase status
+
+Hosted project reference remains:
+
+```text
+imbgufhvigqdnupolxmm
+```
+
+Phase 2 database objects are active. Phase 3 database objects are not yet active until the user applies:
+
+```text
+supabase/migrations/202608040001_projects.sql
+supabase/migrations/202608040002_replace_project_roles.sql
+```
+
+Because direct `supabase db push` connections terminated on the user's network, use the SQL Editor and UTF-8-safe PowerShell copy commands documented in:
+
+```text
+docs/runbooks/project-publishing-setup.md
+```
+
+No database password, service-role key, secret key, or real `.env.local` value has been committed.
 
 ## Exact next action
 
@@ -73,62 +132,51 @@ From the user's local repository:
 
 ```powershell
 cd D:\桌面文件夹\DreamCrew-auth-profile
-git pull origin agent/auth-profile
+git fetch origin
+git switch --create agent/project-publishing --track origin/agent/project-publishing
 ```
 
-In Supabase Dashboard, configure:
-
-```text
-Authentication → URL Configuration
-Site URL: http://localhost:3000
-Redirect URL: http://localhost:3000/**
-```
-
-Leave `Authentication → Emails → Magic Link` on the default template. Do not set up custom SMTP for local validation.
-
-Create `.env.local` with only:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://imbgufhvigqdnupolxmm.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-Then run:
+If the branch already exists:
 
 ```powershell
-npm install
-npm run dev
+git switch agent/project-publishing
+git pull origin agent/project-publishing
 ```
 
-Open `http://localhost:3000/zh/auth`, request a Magic Link, and open it once in the same browser/device that requested it.
+Then follow `docs/runbooks/project-publishing-setup.md` and apply, in order:
 
-## Remaining hosted verification
+1. `202608040001_projects.sql`;
+2. `202608040002_replace_project_roles.sql`.
 
-1. Confirm the default Magic Link reaches `/zh/onboarding` and creates cookie-backed authentication.
-2. Confirm a matching row exists in `Authentication → Users` and `Table Editor → profiles`.
-3. Complete all three onboarding steps.
-4. Confirm selected skills exist in `profile_skills`.
-5. Confirm `/zh/profile` redirects to `/zh/u/{handle}`.
-6. Confirm sign-out removes access to protected routes.
-7. Run private/public and cross-user write-denial checks with two users.
+After database verification, run the real lifecycle:
 
-Keep PR #2 as a draft until these checks pass.
+```text
+user A saves private draft
+→ anonymous user cannot read it
+→ user A completes and publishes it through the editor
+→ anonymous user can read card/detail
+→ user A pauses it
+→ user A reviews and republishes it through the editor
+→ user A closes it
+→ user B cannot edit A's project or roles
+```
 
-## Next product phase after hosted verification
+Keep PR #3 as a draft until these hosted checks pass.
 
-### Phase 3 — real project drafts, publishing, and Supabase-backed marketplace
+## Phase 4 after hosted verification
 
-Only after hosted authentication and RLS verification:
+### Structured applications and mutual confirmation
 
-1. create a new approved implementation plan;
-2. add `projects` and `project_roles` migrations with RLS;
-3. build autosaved project drafts and structured publishing;
-4. replace demo marketplace data with real Supabase records while retaining a clear empty-state/demo fallback;
-5. add moderation status and project-owner permissions;
-6. preserve the no-AI-required core publishing flow.
+Only after project publishing and RLS are verified:
 
-Do not begin applications, matching persistence, or workspaces until real project publishing is verified.
+1. add `applications` and invitation data with RLS;
+2. add tiered application questions based on collaboration seriousness;
+3. add owner review, accept, reject, withdraw, and expiration states;
+4. add trial-task option for long-term venture projects;
+5. add mutual confirmation before revealing private contact details;
+6. add localized notifications for application state changes.
+
+Do not begin workspaces, chat, payments, or autonomous AI project management in the same Phase 4 implementation.
 
 ## Mandatory continuation sequence
 
@@ -137,26 +185,32 @@ A new assistant, Codex session, or developer must:
 1. read `AGENTS.md`;
 2. read this file completely;
 3. read `docs/superpowers/specs/2026-08-01-dreamcrew-design.md`;
-4. read `docs/superpowers/plans/2026-08-01-dreamcrew-auth-profile.md`;
-5. inspect draft PR #2 and its latest GitHub Actions run;
-6. inspect `docs/runbooks/supabase-setup.md`;
-7. continue with real Magic Link and two-user RLS verification unless the user explicitly changes priority.
+4. read `docs/superpowers/specs/2026-08-04-dreamcrew-project-publishing-design.md`;
+5. read `docs/superpowers/plans/2026-08-04-dreamcrew-project-publishing.md`;
+6. inspect draft PR #3 and its latest GitHub Actions run;
+7. inspect `docs/runbooks/project-publishing-setup.md`;
+8. continue with hosted Phase 3 migration and two-user verification unless the user explicitly changes priority.
 
 ## Key files
 
 - Continuity rules: `AGENTS.md`
 - Product design: `docs/superpowers/specs/2026-08-01-dreamcrew-design.md`
-- Phase 2 plan: `docs/superpowers/plans/2026-08-01-dreamcrew-auth-profile.md`
-- Hosted setup runbook: `docs/runbooks/supabase-setup.md`
-- Environment boundary: `src/lib/env/supabase.mjs`
-- Session proxy: `src/proxy.ts`
-- Auth actions: `src/app/[locale]/auth/actions.ts`
-- Confirmation parser: `src/lib/auth/confirmation.mjs`
-- Auth confirmation route: `src/app/[locale]/auth/confirm/route.ts`
-- Profile migrations: `supabase/migrations/202608010001_auth_profiles.sql`
-- Skill replacement migration: `supabase/migrations/202608010002_replace_profile_skills.sql`
-- Onboarding actions: `src/app/[locale]/onboarding/actions.ts`
-- Public profile projection: `src/lib/profile/public-view.mjs`
-- Public profile loader: `src/lib/profile/load-public-profile.ts`
-- Public profile route: `src/app/[locale]/u/[handle]/page.tsx`
+- Phase 3 design: `docs/superpowers/specs/2026-08-04-dreamcrew-project-publishing-design.md`
+- Phase 3 plan: `docs/superpowers/plans/2026-08-04-dreamcrew-project-publishing.md`
+- Phase 3 hosted runbook: `docs/runbooks/project-publishing-setup.md`
+- Project constants: `src/lib/projects/constants.mjs`
+- Project validation: `src/lib/projects/validation.mjs`
+- Project save policy: `src/lib/projects/save-policy.mjs`
+- Owner publishing eligibility: `src/lib/projects/owner-readiness.mjs`
+- Project repository: `src/lib/projects/repository.ts`
+- Public project projection: `src/lib/projects/public-view.mjs`
+- Marketplace filter parsing: `src/lib/projects/marketplace.mjs`
+- Explainable match: `src/lib/projects/match.mjs`
+- Project actions: `src/app/[locale]/projects/actions.ts`
+- Project editor: `src/components/projects/project-editor.tsx`
+- Owner dashboard: `src/app/[locale]/my/projects/page.tsx`
+- Public detail: `src/app/[locale]/projects/[projectKey]/page.tsx`
+- Marketplace: `src/app/[locale]/projects/page.tsx`
+- Project migration: `supabase/migrations/202608040001_projects.sql`
+- Role RPC migration: `supabase/migrations/202608040002_replace_project_roles.sql`
 - CI: `.github/workflows/ci.yml`

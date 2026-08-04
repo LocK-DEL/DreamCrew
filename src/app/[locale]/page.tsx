@@ -4,15 +4,19 @@ import { HeroSection } from "@/components/hero-section";
 import { HowItWorks } from "@/components/how-it-works";
 import { ParticipationPaths } from "@/components/participation-paths";
 import { ProjectCard } from "@/components/project-card";
-import { featuredProjects } from "@/content/projects.mjs";
+import { demoProjectViews } from "@/lib/projects/demo.mjs";
+import { projectCardView } from "@/lib/projects/public-view.mjs";
 import { getDictionary, normalizeLocale } from "@/lib/i18n.mjs";
-import type { DreamCrewDictionary, Locale, ProjectContent } from "@/types/content";
+import type { DreamCrewDictionary, Locale } from "@/types/content";
+import type { ProjectCardView } from "@/types/projects";
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale) as Locale;
   const dictionary = getDictionary(locale) as DreamCrewDictionary;
-  const projects = featuredProjects as ProjectContent[];
+  const projects = demoProjectViews(locale)
+    .map(projectCardView)
+    .filter((project): project is ProjectCardView => project !== null);
 
   return (
     <main>
@@ -31,6 +35,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {dictionary.featured.viewAll} →
             </Link>
           </div>
+          <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-bold text-amber-900">
+            {locale === "zh"
+              ? "以下均为明确标记的结构示例，不代表真实用户或招募。真实项目会在项目广场单独展示。"
+              : "These are clearly labeled structure examples, not real users or recruitment. Hosted projects appear separately in the marketplace."}
+          </p>
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {projects.slice(0, 6).map((project) => (
               <ProjectCard key={project.slug} locale={locale} project={project} dictionary={dictionary} />
