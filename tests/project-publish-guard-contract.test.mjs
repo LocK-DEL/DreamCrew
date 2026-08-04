@@ -21,11 +21,13 @@ test("requires a complete public owner profile before editor publishing", async 
   assert.match(actions, /fieldErrors: \{ profile: ownerReadiness\.reason/);
 });
 
-test("prevents the dashboard lifecycle action from bypassing publish validation", async () => {
+test("prevents every dashboard lifecycle action from bypassing publish validation", async () => {
   const [actions, card] = await Promise.all([source(actionsPath), source(ownerCardPath)]);
 
-  assert.match(actions, /currentStatus === "draft" && nextStatus === "published"/);
+  assert.match(actions, /if \(nextStatus === "published"\)/);
   assert.match(actions, /publish-from-editor-required/);
   assert.match(card, /case "draft": return \[\["archived", "archived"\]\]/);
+  assert.match(card, /case "paused": return \[\["closed", "closed"\], \["archived", "archived"\]\]/);
   assert.doesNotMatch(card, /case "draft": return \[\["published"/);
+  assert.doesNotMatch(card, /case "paused": return \[\["published"/);
 });
