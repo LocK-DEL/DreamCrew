@@ -31,7 +31,7 @@ begin
     raise exception 'project-not-owned' using errcode = '42501';
   end if;
 
-  if jsonb_typeof(p_roles) <> 'array' then
+  if p_roles is null or jsonb_typeof(p_roles) <> 'array' then
     raise exception 'roles-must-be-array' using errcode = '22023';
   end if;
 
