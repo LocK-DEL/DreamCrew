@@ -5,8 +5,12 @@ import { readFile } from "node:fs/promises";
 const files = {
   newPage: new URL("../src/app/[locale]/projects/new/page.tsx", import.meta.url),
   editPage: new URL("../src/app/[locale]/projects/[projectKey]/edit/page.tsx", import.meta.url),
+  dashboard: new URL("../src/app/[locale]/my/projects/page.tsx", import.meta.url),
+  ownerCard: new URL("../src/components/projects/owner-project-card.tsx", import.meta.url),
   actions: new URL("../src/app/[locale]/projects/actions.ts", import.meta.url),
   editor: new URL("../src/components/projects/project-editor.tsx", import.meta.url),
+  header: new URL("../src/components/site-header.tsx", import.meta.url),
+  mobileNav: new URL("../src/components/mobile-nav.tsx", import.meta.url),
 };
 
 async function code(path) {
@@ -64,4 +68,40 @@ test("renders four structured sections and serializes repeatable roles", async (
   assert.match(editor, /disclosure/);
   assert.match(editor, /name="intent" value="save"/);
   assert.match(editor, /name="intent" value="publish"/);
+});
+
+test("protects and groups the owner project dashboard", async () => {
+  const dashboard = await code(files.dashboard);
+
+  assert.match(dashboard, /requireAuthenticatedUser/);
+  assert.match(dashboard, /loadOwnedProjects\(userId\)/);
+  assert.match(dashboard, /OwnerProjectCard/);
+  assert.match(dashboard, /draft/);
+  assert.match(dashboard, /published/);
+  assert.match(dashboard, /paused/);
+  assert.match(dashboard, /closed/);
+  assert.match(dashboard, /archived/);
+  assert.match(dashboard, /\/projects\/new/);
+});
+
+test("renders legal lifecycle actions and UUID edit links on owner cards", async () => {
+  const card = await code(files.ownerCard);
+
+  assert.match(card, /changeProjectStatus/);
+  assert.match(card, /\/projects\/\$\{project\.id\}\/edit/);
+  assert.match(card, /next_status/);
+  assert.match(card, /published/);
+  assert.match(card, /paused/);
+  assert.match(card, /closed/);
+  assert.match(card, /archived/);
+  assert.match(card, /project_roles/);
+});
+
+test("points primary publish navigation to the real project creator", async () => {
+  const [header, mobileNav] = await Promise.all([code(files.header), code(files.mobileNav)]);
+
+  assert.match(header, /\/projects\/new/);
+  assert.match(header, /\/my\/projects/);
+  assert.match(mobileNav, /\/projects\/new/);
+  assert.doesNotMatch(mobileNav, /#cohort/);
 });
