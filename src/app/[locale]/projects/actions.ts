@@ -12,6 +12,10 @@ import {
   validateProjectRole,
 } from "@/lib/projects/validation.mjs";
 import {
+  canPublishProjectStatus,
+  requiresPublishValidation,
+} from "@/lib/projects/save-policy.mjs";
+import {
   createOwnedProjectDraft,
   loadOwnedProjectEditor,
   replaceOwnedProjectRoles,
@@ -155,9 +159,26 @@ export async function saveProjectDraft(
     return { ok: false, message: "invalid-form", fieldErrors: { projectId: "invalid-project-id" } };
   }
 
-  const roles = rolesResult.roles;
   const intent = stringValue(formData, "intent") === "publish" ? "publish" : "save";
-  if (intent === "publish") {
+  let currentStatus = "draft";
+  if (projectId) {
+    const current = await loadOwnedProjectEditor(userId, projectId);
+    if (current.error || !current.data) {
+      return { ok: false, message: "not-found" };
+    }
+    currentStatus = String(current.data.status ?? "");
+  }
+
+  if (intent === "publish" && !canPublishProjectStatus(currentStatus)) {
+    return {
+      ok: false,
+      message: "invalid-form",
+      fieldErrors: { status: "status-cannot-publish" },
+    };
+  }
+
+  const roles = rolesResult.roles;
+  if (requiresPublishValidation(currentStatus, intent)) {
     const publishResult = validateProjectForPublish(draftValue, roles);
     if (!publishResult.ok) {
       return { ok: false, message: "invalid-form", fieldErrors: validationErrors(publishResult) };
@@ -190,7 +211,7 @@ export async function saveProjectDraft(
     return { ok: false, projectId: savedProjectId, message: "save-failed" };
   }
 
-  if (intent === "publish") {
+  if (intent === "publish" && currentStatus !== "published") {
     const statusResult = await transitionOwnedProjectStatus(userId, savedProjectId, "published");
     if (statusResult.error) return { ok: false, projectId: savedProjectId, message: "save-failed" };
   }
