@@ -7,7 +7,7 @@ import { demoProjectViews } from "@/lib/projects/demo.mjs";
 import { scoreProjectMatch } from "@/lib/projects/match.mjs";
 import { marketplaceFiltersFromSearchParams } from "@/lib/projects/marketplace.mjs";
 import { projectCardView } from "@/lib/projects/public-view.mjs";
-import { loadPublicProjects } from "@/lib/projects/repository";
+import { loadPublicProjects, type ProjectMarketplaceFilters } from "@/lib/projects/repository";
 import { loadProjectMatchViewer } from "@/lib/projects/viewer";
 import type { DreamCrewDictionary, Locale } from "@/types/content";
 import type { ProjectCardView, PublicProject } from "@/types/projects";
@@ -54,7 +54,7 @@ export default async function ProjectsPage({ params, searchParams }: ProjectsPag
   const [{ locale: rawLocale }, query] = await Promise.all([params, searchParams]);
   const locale = normalizeLocale(rawLocale) as Locale;
   const dictionary = getDictionary(locale) as DreamCrewDictionary;
-  const filters = marketplaceFiltersFromSearchParams(query);
+  const filters = marketplaceFiltersFromSearchParams(query) as ProjectMarketplaceFilters;
   const userId = await getAuthenticatedUserId();
   const [result, viewer] = await Promise.all([
     loadPublicProjects(filters, locale),
