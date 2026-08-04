@@ -5,6 +5,8 @@ import { readFile } from "node:fs/promises";
 const files = {
   newPage: new URL("../src/app/[locale]/projects/new/page.tsx", import.meta.url),
   editPage: new URL("../src/app/[locale]/projects/[projectKey]/edit/page.tsx", import.meta.url),
+  detailPage: new URL("../src/app/[locale]/projects/[projectKey]/page.tsx", import.meta.url),
+  detail: new URL("../src/components/projects/project-detail.tsx", import.meta.url),
   dashboard: new URL("../src/app/[locale]/my/projects/page.tsx", import.meta.url),
   ownerCard: new URL("../src/components/projects/owner-project-card.tsx", import.meta.url),
   actions: new URL("../src/app/[locale]/projects/actions.ts", import.meta.url),
@@ -104,4 +106,29 @@ test("points primary publish navigation to the real project creator", async () =
   assert.match(header, /\/my\/projects/);
   assert.match(mobileNav, /\/projects\/new/);
   assert.doesNotMatch(mobileNav, /#cohort/);
+});
+
+test("loads public project details through the privacy-safe public loader", async () => {
+  const page = await code(files.detailPage);
+
+  assert.match(page, /loadPublicProjectBySlug\(projectKey/);
+  assert.match(page, /notFound\(\)/);
+  assert.match(page, /generateMetadata/);
+  assert.match(page, /ProjectDetail/);
+  assert.doesNotMatch(page, /requireAuthenticatedUser/);
+});
+
+test("renders project disclosure, roles, safe evidence, and a Phase 4 application placeholder", async () => {
+  const detail = await code(files.detail);
+
+  assert.match(detail, /project\.problem/);
+  assert.match(detail, /project\.targetAudience/);
+  assert.match(detail, /project\.expectedOutcome/);
+  assert.match(detail, /project\.firstMilestone/);
+  assert.match(detail, /project\.compensationDetails/);
+  assert.match(detail, /project\.roles/);
+  assert.match(detail, /rel="noreferrer noopener"/);
+  assert.match(detail, /\/u\/\$\{project\.owner\.handle\}/);
+  assert.match(detail, /Phase 4/);
+  assert.match(detail, /project\.status === "closed"/);
 });
