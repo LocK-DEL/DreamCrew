@@ -13,7 +13,7 @@ test("creates an authenticated atomic project-role replacement RPC", async () =>
 
   assert.match(sql, /create function public\.replace_project_roles\( p_project_id uuid, p_roles jsonb \)/);
   assert.match(sql, /security invoker/);
-  assert.match(sql, /jsonb_typeof\(p_roles\) <> 'array'/);
+  assert.match(sql, /p_roles is null or jsonb_typeof\(p_roles\) <> 'array'/);
   assert.match(sql, /delete from public\.project_roles where project_id = p_project_id/);
   assert.match(sql, /insert into public\.project_roles/);
   assert.match(sql, /return v_inserted/);
